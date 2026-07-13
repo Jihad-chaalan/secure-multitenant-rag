@@ -1,0 +1,22 @@
+# Python virtual environment
+backend/.venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+wheels/
+*.egg-info
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+
+# Node
+node_modules/
+
+# Build files
+dist/
+build/
