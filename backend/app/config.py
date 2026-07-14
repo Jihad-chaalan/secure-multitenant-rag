@@ -17,3 +17,7 @@ OPENAI_API_KEY = GROQ_API_KEY  # For compatibility
 
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 500))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100))
+
+# Embedding Settings 
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+EMBEDDING_DIM = 384  # all-MiniLM-L6-v2
