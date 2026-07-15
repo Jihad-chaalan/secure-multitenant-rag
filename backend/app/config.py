@@ -21,3 +21,7 @@ CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100))
 # Embedding Settings 
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
 EMBEDDING_DIM = 384  # all-MiniLM-L6-v2
+
+
+# VectorDB Settings 
+COLLECTION_NAME = os.getenv("COLLECTION_NAME", "enterprise_rag")
