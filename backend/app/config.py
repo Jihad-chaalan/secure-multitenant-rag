@@ -1,7 +1,12 @@
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
+
+# Paths
+BASE_DIR = Path(__file__).parent.parent  # Goes up to backend folder
+DATA_DIR = BASE_DIR / "app" / "data" / "documents"
 
 
 # LLM Settings (Groq)
