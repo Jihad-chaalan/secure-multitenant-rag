@@ -25,3 +25,7 @@ EMBEDDING_DIM = 384  # all-MiniLM-L6-v2
 
 # VectorDB Settings 
 COLLECTION_NAME = os.getenv("COLLECTION_NAME", "enterprise_rag")
+
+
+# Retrieval Settings
+TOP_K = int(os.getenv("TOP_K", 5))
