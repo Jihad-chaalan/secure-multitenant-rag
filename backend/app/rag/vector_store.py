@@ -176,7 +176,11 @@ def search(
     try:
         where_clause = None
         if filters:
-            where_clause = filters
+            # ChromaDB requires $and for multiple conditions
+            if len(filters) > 1:
+                where_clause = {"$and": [{k: v} for k, v in filters.items()]}
+            else:
+                where_clause = filters
         
         results = collection.query(
             query_embeddings=[query_embedding],
