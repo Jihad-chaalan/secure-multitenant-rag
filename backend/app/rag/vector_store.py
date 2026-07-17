@@ -7,7 +7,7 @@ from pathlib import Path
 
 import chromadb
 from chromadb.config import Settings
-from chromadb.errors import NotFoundError  # <-- IMPORTANT
+from chromadb.errors import NotFoundError
 from app.config import COLLECTION_NAME
 
 logger = logging.getLogger(__name__)
@@ -40,11 +40,9 @@ def get_collection(collection_name: str = COLLECTION_NAME):
     client = get_client()
     
     try:
-        # Try to get existing collection
         collection = client.get_collection(collection_name)
         logger.info(f"📂 Using existing collection: {collection_name}")
     except (ValueError, NotFoundError):
-        # Collection doesn't exist, create it
         collection = client.create_collection(
             name=collection_name,
             metadata={"hnsw:space": "cosine"}
@@ -63,19 +61,26 @@ def reset_collection(collection_name: str = COLLECTION_NAME):
         client.delete_collection(collection_name)
         logger.info(f"🗑️ Deleted collection: {collection_name}")
     except (ValueError, NotFoundError):
-        # Collection didn't exist, that's fine
         logger.info(f"ℹ️ Collection '{collection_name}' did not exist, skipping delete.")
     
-    # Recreate it
     get_collection(collection_name)
 
 
 def add_vectors(
     embedded_chunks: List[Dict[str, Any]],
+    metadata: Optional[Dict[str, str]] = None,
     collection_name: str = COLLECTION_NAME
 ) -> Tuple[int, List[Dict[str, str]]]:
     """
-    Add embedded chunks to ChromaDB.
+    Add embedded chunks to ChromaDB with optional metadata.
+
+    Args:
+        embedded_chunks: List of chunks with 'text', 'source_file', 'chunk_index', 'embedding'
+        metadata: Optional dict with 'department' and 'role' (for multi-tenancy)
+        collection_name: Name of the collection
+
+    Returns:
+        A tuple of (count_added, errors)
     """
     if not embedded_chunks:
         logger.warning("No embedded chunks to add.")
@@ -97,10 +102,20 @@ def add_vectors(
             embeddings.append(chunk["embedding"])
             documents.append(chunk["text"])
             
-            metadatas.append({
+            # Build metadata for this chunk
+            chunk_metadata = {
                 "source_file": chunk["source_file"],
                 "chunk_index": chunk["chunk_index"],
-            })
+            }
+            
+            # 🔥 Add department and role if provided
+            if metadata:
+                if "department" in metadata:
+                    chunk_metadata["department"] = metadata["department"]
+                if "role" in metadata:
+                    chunk_metadata["role"] = metadata["role"]
+            
+            metadatas.append(chunk_metadata)
             
         except KeyError as e:
             errors.append({
@@ -120,6 +135,11 @@ def add_vectors(
             documents=documents
         )
         logger.info(f"✅ Added {len(ids)} vectors to '{collection_name}'.")
+        
+        # Log metadata info
+        if metadata:
+            logger.info(f"   🏷️ Metadata: department={metadata.get('department', 'N/A')}, role={metadata.get('role', 'N/A')}")
+        
     except Exception as e:
         logger.error(f"❌ Failed to add vectors: {e}")
         errors.append({
@@ -140,6 +160,15 @@ def search(
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, str]]]:
     """
     Search for similar vectors in ChromaDB.
+
+    Args:
+        query_embedding: The embedding of the user's query
+        top_k: Number of results to return
+        filters: Dict of metadata filters (e.g., {"department": "Department_A", "role": "Engineering"})
+        collection_name: Name of the collection
+
+    Returns:
+        A tuple of (results, errors)
     """
     collection = get_collection(collection_name)
     errors = []
