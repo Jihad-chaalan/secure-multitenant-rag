@@ -36,4 +36,4 @@ COLLECTION_NAME = os.getenv("COLLECTION_NAME", "enterprise_rag")
 TOP_K = int(os.getenv("TOP_K", 5))
 
 # Google Drive Settings
-GDRIVE_FOLDER_ID = os.getenv("GDRIVE_FOLDER_ID", "")
+GDRIVE_ROOT_FOLDER_ID = os.getenv("GDRIVE_ROOT_FOLDER_ID", "")
