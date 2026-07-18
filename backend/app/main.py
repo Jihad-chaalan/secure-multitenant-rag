@@ -16,7 +16,7 @@ from app.rag.retriever import retrieve, format_results_for_prompt
 from app.rag.generator import generate_answer
 from app.rag.gdrive_loader import stream_documents_from_gdrive
 from app.rag.vector_store import reset_collection
-
+from app.rag.bm25_index import build_bm25_indexes
 
 # Configure logging
 logging.basicConfig(
@@ -204,6 +204,11 @@ def main():
     else:
         print("\n✅ Documents are already indexed. Skipping re-indexing.")
         print("   To re-index, delete the 'chroma_db' folder and restart.")
+
+     # ---  Build BM25 indexes for hybrid search ---
+    print("\n🔄 Building BM25 indexes for hybrid search...")
+    build_bm25_indexes()
+    print("✅ BM25 indexes ready.")
 
     # --- 4. Interactive chat loop ---
     print("\n" + "=" * 60)
