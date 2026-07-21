@@ -44,3 +44,10 @@ USE_RERANKER = os.getenv("USE_RERANKER", "true").lower() == "true"
 RERANKER_MODEL = os.getenv("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
 RERANKER_TOP_K = int(os.getenv("RERANKER_TOP_K", 5))
 RERANKER_CANDIDATE_COUNT = int(os.getenv("RERANKER_CANDIDATE_COUNT", 20))
+
+
+# FastAPI Settings
+API_HOST = os.getenv("API_HOST", "0.0.0.0")
+API_PORT = int(os.getenv("API_PORT", 8000))
+
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")

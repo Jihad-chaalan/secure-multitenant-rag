@@ -123,3 +123,4 @@ def get_bm25_status() -> Dict[str, int]:
         key: len(_bm25_corpus.get(key, []))
         for key in _bm25_indexes.keys()
     }
+

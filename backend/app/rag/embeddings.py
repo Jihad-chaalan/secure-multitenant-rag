@@ -110,3 +110,7 @@ def embed_query(query: str) -> List[float]:
         List of floats (embedding vector)
     """
     return embed_text(query)
+
+def get_embedding_status() -> bool:
+    """Return True if the embedding model is loaded, False otherwise."""
+    return _encoder is not None

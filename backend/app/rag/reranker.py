@@ -73,3 +73,10 @@ def rerank(
     logger.info(f"✅ Reranking complete. Top score: {documents[0]['reranker_score']:.4f}")
 
     return documents[:top_k]
+
+
+# backend/app/rag/reranker.py
+
+def get_reranker_status() -> bool:
+    """Return True if the reranker model is loaded, False otherwise."""
+    return _reranker_model is not None
