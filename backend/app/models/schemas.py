@@ -12,7 +12,7 @@ class ChatRequest(BaseModel):
     department: str = Field(..., description="Department name (e.g., Department_A)")
     role: str = Field(..., description="Role name (e.g., Engineering)")
     top_k: Optional[int] = Field(5, description="Number of chunks to return", ge=1, le=10)
-
+    session_id: Optional[str] = Field(None, description="Session ID for tracking")
 
 # --- Response Models ---
 
@@ -25,7 +25,7 @@ class ScoreInfo(BaseModel):
 
 class Source(BaseModel):
     """A single source document used to generate the answer."""
-    chunk_id: Optional[str] = None  # <-- ADDED for traceability
+    chunk_id: Optional[str] = None  
     file: str
     department: str
     role: str
@@ -50,12 +50,21 @@ class Performance(BaseModel):
     retrieval_ms: float
     reranking_ms: float
     generation_ms: float
+    scanner_ms: Optional[float] = None
+
+class SecurityWarning(BaseModel):
+    """Security warning returned in the API response."""
+    blocked: bool
+    category: str
+    message: str
+    risk_score: int
 
 
 class ChatResponse(BaseModel):
     """Response body for /api/v1/chat."""
-    answer: str
+    answer: Optional[str] = None  
     sources: List[Source] = []
-    metadata: ChatMetadata
-    performance: Performance
+    metadata: Optional[ChatMetadata] = None  
+    performance: Optional[Performance] = None
     status: str = "success"
+    security_warning: Optional[SecurityWarning] = None 

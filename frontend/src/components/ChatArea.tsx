@@ -19,6 +19,7 @@ export default function ChatArea() {
     setIsLoading,
     setChatResult,
     addRequestLog,
+    addSecurityEvent,
   } = useAppStore();
 
   const [input, setInput] = useState('');
@@ -53,20 +54,48 @@ export default function ChatArea() {
 
       const data = response.data;
 
-      // 3. Add assistant message
-      addMessage({ role: 'assistant' as const, content: data.answer });
+      // --- 3. Check for Security Warning (Blocked) ---
+      if (data.security_warning && data.security_warning.blocked) {
+        // Show warning banner
+        addMessage({
+          role: 'assistant' as const,
+          content: `⛔ ${data.security_warning.message}`,
+          isWarning: true,
+        });
 
-      // 4. Save sources and performance for the UI
+        // Log security event to Admin Dashboard
+        addSecurityEvent({
+          timestamp: new Date().toISOString(),
+          query: input,
+          department,
+          role,
+          reason: data.security_warning.message,
+          category: data.security_warning.category,
+          risk_score: data.security_warning.risk_score,
+          action_taken: 'block',
+        });
+
+        // Show performance (scanner time)
+        if (data.performance) {
+          setChatResult([], data.performance);
+        }
+
+        // Stop here — no answer to display
+        return;
+      }
+
+      // --- 4. Safe request: Normal flow ---
+      addMessage({ role: 'assistant' as const, content: data.answer || '' });
       setChatResult(data.sources, data.performance);
 
-      // 5. 🔥 Log the request for the Admin Dashboard
+      // 5. Log performance request
       addRequestLog({
         timestamp: new Date().toISOString(),
         query: input,
         department,
         role,
-        latency_ms: data.performance.latency_ms,
-        source_count: data.sources.length,
+        latency_ms: data.performance?.latency_ms || 0,
+        source_count: data.sources?.length || 0,
         status: 'success',
       });
     } catch (error) {
@@ -76,7 +105,7 @@ export default function ChatArea() {
         content: 'Sorry, an error occurred. Please try again.',
       });
 
-      // 7. 🔥 Log the failed request for the Admin Dashboard
+      // 7. Log the failed request
       addRequestLog({
         timestamp: new Date().toISOString(),
         query: input,
@@ -116,22 +145,33 @@ export default function ChatArea() {
           </div>
         )}
 
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
+        {messages.map((msg, idx) => {
+          // Determine bubble style
+          let bubbleClasses = 'max-w-3xl rounded-lg px-4 py-3 ';
+          if (msg.isWarning) {
+            bubbleClasses += 'bg-yellow-50 border border-yellow-300 text-yellow-800';
+          } else if (msg.role === 'user') {
+            bubbleClasses += 'bg-primary-600 text-white';
+          } else {
+            bubbleClasses += 'bg-gray-100 text-gray-800';
+          }
+
+          return (
             <div
-              className={`max-w-3xl rounded-lg px-4 py-3 ${
-                msg.role === 'user'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-100 text-gray-800'
-              }`}
+              key={idx}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <p className="whitespace-pre-wrap">{msg.content}</p>
+              <div className={bubbleClasses}>
+                <p className="whitespace-pre-wrap">{msg.content}</p>
+                {msg.isWarning && (
+                  <p className="text-xs text-yellow-600 mt-1">
+                    This attempt has been logged for security monitoring.
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {isLoading && (
           <div className="flex justify-start">

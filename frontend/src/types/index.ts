@@ -20,6 +20,14 @@ export interface PerformanceMetrics {
   retrieval_ms: number;
   reranking_ms: number;
   generation_ms: number;
+  scanner_ms?: number;
+}
+
+export interface SecurityWarning {
+  blocked: boolean;
+  category: string;
+  message: string;
+  risk_score: number;
 }
 
 export interface ChatMetadata {
@@ -38,6 +46,7 @@ export interface ChatResponse {
   metadata: ChatMetadata;
   performance: PerformanceMetrics;
   status: string;
+  security_warning: SecurityWarning | null;
 }
 
 export interface ChatRequest {
@@ -57,4 +66,16 @@ export interface RequestLog {
   latency_ms: number;
   source_count: number;
   status: 'success' | 'error';
+}
+
+export interface SecurityEvent {
+  id: string;
+  timestamp: string;
+  query: string;
+  department: string;
+  role: string;
+  reason: string;
+  category: string;
+  risk_score: number;
+  action_taken: 'warn' | 'block';
 }

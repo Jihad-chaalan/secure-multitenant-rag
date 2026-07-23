@@ -1,0 +1,2 @@
+invalid type: string "---\n## 4. INFRASTRUCTURE & DEVOPS\n**Cloud Provider:** AWS (Primary region: us-east-1)\n\n**Compute:**\n- **ECS Fargate:** For microservices (API, workers, cron jobs).\n- **EC2:** For legacy services (to be migrated by Q4).\n\n**Containerization:** Docker (images built via GitHub Actions).\nchemy).
+- **Domain Layer:** Pure business entities without external dependencies.ÿÿÿÿ

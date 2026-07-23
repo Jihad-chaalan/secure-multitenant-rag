@@ -51,3 +51,6 @@ API_HOST = os.getenv("API_HOST", "0.0.0.0")
 API_PORT = int(os.getenv("API_PORT", 8000))
 
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
+
+# AI Security Layer
+ENABLE_AI_SECURITY_LAYER = os.getenv("ENABLE_AI_SECURITY_LAYER", "true").lower() == "true"
