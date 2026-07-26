@@ -22,10 +22,10 @@ export interface RequestLog {
 export interface Message {
   role: 'user' | 'assistant';
   content: string;
-  isWarning?: boolean; // Optional flag for security warning messages
+  isWarning?: boolean;
+  department?: string;
+  tenantRole?: string;
 }
-
-
 
 // ============================================================
 // STATE INTERFACE
@@ -154,6 +154,7 @@ export const useAppStore = create<AppState>()(
         role: state.role,
         requestHistory: state.requestHistory,
         securityHistory: state.securityHistory,
+        messages: state.messages, // <-- Added to persist messages with their context
       }),
     }
   )

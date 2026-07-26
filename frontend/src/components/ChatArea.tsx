@@ -43,8 +43,13 @@ export default function ChatArea() {
     if (customQuery) setInput('');
     else setInput('');
 
-    const userMsg = { role: 'user' as const, content: queryToSend };
-    addMessage(userMsg);
+    addMessage({
+      role: 'user',
+      content: queryToSend,
+      department: department,
+      tenantRole: role,
+    });
+
     setIsLoading(true);
     setChatResult([], null);
 
@@ -60,7 +65,7 @@ export default function ChatArea() {
 
       if (data.security_warning && data.security_warning.blocked) {
         addMessage({
-          role: 'assistant' as const,
+          role: 'assistant',
           content: `⛔ ${data.security_warning.message}`,
           isWarning: true,
         });
@@ -80,7 +85,10 @@ export default function ChatArea() {
         return;
       }
 
-      addMessage({ role: 'assistant' as const, content: data.answer || '' });
+      addMessage({
+        role: 'assistant',
+        content: data.answer || '',
+      });
       setChatResult(data.sources, data.performance);
 
       addRequestLog({
@@ -94,7 +102,7 @@ export default function ChatArea() {
       });
     } catch (error) {
       addMessage({
-        role: 'assistant' as const,
+        role: 'assistant',
         content: 'Sorry, an error occurred. Please try again.',
       });
 
@@ -118,7 +126,7 @@ export default function ChatArea() {
     <div className="flex-1 flex flex-col bg-white dark:bg-gray-900 h-full">
       {/* Header */}
       <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
           🗂️ {department} / {role}
         </h2>
         {performance && <PerformanceChip performance={performance} />}
@@ -138,16 +146,23 @@ export default function ChatArea() {
               if (msg.isWarning) {
                 bubbleClasses += 'bg-yellow-50 border border-yellow-300 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-200';
               } else if (msg.role === 'user') {
-                bubbleClasses += 'bg-primary-600 text-white';
+                bubbleClasses += 'bg-blue-600 text-white shadow-sm';
               } else {
-                bubbleClasses += 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200';
+                // 🔥 ASSISTANT BUBBLE: White background in both modes,
+                // dark text in light mode, white text in dark mode.
+                bubbleClasses += 'bg-white dark:bg-white text-gray-800 dark:text-gray-800';
               }
 
               return (
                 <div
                   key={idx}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
                 >
+                  {msg.role === 'user' && msg.department && msg.tenantRole && (
+                    <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 mb-1 mr-1">
+                      {msg.department} / {msg.tenantRole}
+                    </span>
+                  )}
                   <div className={bubbleClasses}>
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                     {msg.isWarning && (
@@ -162,7 +177,7 @@ export default function ChatArea() {
 
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3 text-gray-500 dark:text-gray-400">
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3 text-gray-500 dark:text-gray-300">
                   <span className="animate-pulse">▸</span> Thinking...
                 </div>
               </div>
@@ -171,7 +186,7 @@ export default function ChatArea() {
             {!isLoading && sources.length > 0 && (
               <div className="mt-4">
                 <details className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800/50">
-                  <summary className="px-4 py-3 font-medium text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition flex items-center justify-between">
+                  <summary className="px-4 py-3 font-medium text-gray-700 dark:text-gray-200 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition flex items-center justify-between">
                     <span>📚 {sources.length} Sources Retrieved</span>
                     <span className="text-xs text-gray-400">Click to expand</span>
                   </summary>
@@ -189,7 +204,7 @@ export default function ChatArea() {
         )}
       </div>
 
-      {/* 🔥 QuickActions — Always visible */}
+      {/* QuickActions — Always visible */}
       <div className="px-6 py-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
         <QuickActions onSend={handleSend} />
       </div>
@@ -209,7 +224,7 @@ export default function ChatArea() {
           <button
             onClick={() => handleSend()}
             disabled={isLoading || !input.trim()}
-            className="bg-primary-600 text-white px-6 py-2.5 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
+            className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
           >
             Send
           </button>

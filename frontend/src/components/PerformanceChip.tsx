@@ -8,13 +8,13 @@ interface PerformanceChipProps {
 
 export default function PerformanceChip({ performance }: PerformanceChipProps) {
   return (
-    <div className="inline-flex items-center flex-wrap gap-2 px-3 py-1.5 bg-gray-100 rounded-full text-xs text-gray-600 border border-gray-200">
+    <div className="inline-flex items-center flex-wrap gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-full text-xs text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
       <span className="font-medium">⏱️ {performance.latency_ms}ms</span>
-      <span className="text-gray-300">|</span>
+      <span className="text-gray-300 dark:text-gray-600">|</span>
       <span>Retrieval {performance.retrieval_ms}ms</span>
-      <span className="text-gray-300">|</span>
+      <span className="text-gray-300 dark:text-gray-600">|</span>
       <span>Rerank {performance.reranking_ms}ms</span>
-      <span className="text-gray-300">|</span>
+      <span className="text-gray-300 dark:text-gray-600">|</span>
       <span>LLM {performance.generation_ms}ms</span>
     </div>
   );

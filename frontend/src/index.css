@@ -33,3 +33,36 @@
 .animate-fade-in {
   animation: fadeIn 0.6s ease-out forwards;
 }
+/* src/index.css — Add at the very bottom */
+
+html.dark .bg-white {
+  background-color: #1f2937 !important; /* gray-800 */
+}
+
+html.dark .bg-gray-50 {
+  background-color: #111827 !important; /* gray-900 */
+}
+
+html.dark .text-gray-800 {
+  color: #e5e7eb !important; /* gray-200 */
+}
+
+html.dark .border-gray-200 {
+  border-color: #374151 !important; /* gray-700 */
+}
+
+html.dark .text-gray-500 {
+  color: #9ca3af !important; /* gray-400 */
+}
+
+html.dark .text-gray-600 {
+  color: #d1d5db !important; /* gray-300 */
+}
+
+html.dark .bg-primary-50 {
+  background-color: #1e293b !important; /* slate-800 */
+}
+
+html.dark .border-primary-100 {
+  border-color: #334155 !important; /* slate-700 */
+}
