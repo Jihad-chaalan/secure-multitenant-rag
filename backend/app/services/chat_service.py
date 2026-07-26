@@ -59,7 +59,7 @@ def ask(request: ChatRequest) -> ChatResponse:
 
     # Step 3: Generate Answer (LLM)
     generation_start = time.perf_counter()
-    answer, context = generate_answer(request.query, reranked_results)
+    answer, usage, context = generate_answer(request.query, reranked_results)
     generation_time = (time.perf_counter() - generation_start) * 1000  # ms
 
     # Step 4: Build sources list
@@ -109,7 +109,10 @@ def ask(request: ChatRequest) -> ChatResponse:
             latency_ms=round(total_latency, 2),
             retrieval_ms=round(retrieval_time, 2),
             reranking_ms=round(reranking_time, 2),
-            generation_ms=round(generation_time, 2)
+            generation_ms=round(generation_time, 2),
+            prompt_tokens=usage.get("prompt_tokens"),
+            completion_tokens=usage.get("completion_tokens"),
+            total_tokens=usage.get("total_tokens"),
         ),
         status="success"
     )

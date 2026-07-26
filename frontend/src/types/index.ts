@@ -21,6 +21,9 @@ export interface PerformanceMetrics {
   reranking_ms: number;
   generation_ms: number;
   scanner_ms?: number;
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  total_tokens?: number;
 }
 
 export interface SecurityWarning {
@@ -71,6 +74,7 @@ export interface RequestLog {
 export interface SecurityEvent {
   id: string;
   timestamp: string;
+  request_id: string;
   query: string;
   department: string;
   role: string;

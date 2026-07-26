@@ -51,6 +51,9 @@ class Performance(BaseModel):
     reranking_ms: float
     generation_ms: float
     scanner_ms: Optional[float] = None
+    prompt_tokens: Optional[int] = None
+    completion_tokens: Optional[int] = None
+    total_tokens: Optional[int] = None
 
 class SecurityWarning(BaseModel):
     """Security warning returned in the API response."""

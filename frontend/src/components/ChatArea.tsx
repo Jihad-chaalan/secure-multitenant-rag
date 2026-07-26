@@ -99,6 +99,7 @@ export default function ChatArea() {
 
       // --- Security Block ---
       if (data.security_warning && data.security_warning.blocked) {
+          const requestId = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString();
         addMessage({
           role: 'assistant',
           content: `⛔ ${data.security_warning.message}`,
@@ -107,6 +108,7 @@ export default function ChatArea() {
 
         addSecurityEvent({
           timestamp: new Date().toISOString(),
+          request_id:requestId,
           query: queryToSend,
           department,
           role,
@@ -138,6 +140,9 @@ export default function ChatArea() {
         latency_ms: data.performance?.latency_ms || 0,
         source_count: data.sources?.length || 0,
         status: 'success',
+        total_tokens: data.performance?.total_tokens || 0,
+        prompt_tokens: data.performance?.prompt_tokens || 0,        
+        completion_tokens: data.performance?.completion_tokens || 0,
       });
 
     } catch (error) {

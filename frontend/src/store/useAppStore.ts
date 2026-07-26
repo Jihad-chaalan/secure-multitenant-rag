@@ -17,6 +17,9 @@ export interface RequestLog {
   latency_ms: number;
   source_count: number;
   status: 'success' | 'error';
+  total_tokens?: number;
+  prompt_tokens?: number;      
+  completion_tokens?: number; 
 }
 
 export interface Message {

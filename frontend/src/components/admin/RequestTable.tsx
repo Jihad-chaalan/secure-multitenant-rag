@@ -33,6 +33,7 @@ export default function RequestTable({ logs }: RequestTableProps) {
           <thead className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             <tr>
               <th className="px-6 py-3">Time</th>
+              <th className="px-6 py-3">Request ID</th>
               <th className="px-6 py-3">Department</th>
               <th className="px-6 py-3">Role</th>
               <th className="px-6 py-3">Query</th>
@@ -47,6 +48,9 @@ export default function RequestTable({ logs }: RequestTableProps) {
                 <td className="px-6 py-3 text-gray-500 text-xs whitespace-nowrap">
                   {new Date(log.timestamp).toLocaleTimeString()}
                 </td>
+                <td className="px-6 py-3 font-mono text-xs text-gray-400">
+  {log.id.slice(0, 8)}...{log.id.slice(-4)}
+</td>
                 <td className="px-6 py-3 font-medium text-gray-700">{log.department}</td>
                 <td className="px-6 py-3 text-gray-600">{log.role}</td>
                 <td className="px-6 py-3 text-gray-800 max-w-xs truncate">

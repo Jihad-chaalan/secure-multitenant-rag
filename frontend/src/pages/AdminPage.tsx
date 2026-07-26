@@ -4,6 +4,8 @@ import { useAppStore } from '../store/useAppStore';
 import MetricsGrid from '../components/admin/MetricsGrid';
 import RequestTable from '../components/admin/RequestTable';
 import SecurityTable from '../components/admin/SecurityTable';
+import TokenUsageTable from '../components/admin/TokenUsageTable';
+
 export default function AdminPage() {
   const { requestHistory, securityHistory, clearHistory } = useAppStore();
 
@@ -30,6 +32,10 @@ export default function AdminPage() {
 
       {/* Request History Table */}
       <RequestTable logs={requestHistory} />
+
+      <div className="mt-8">
+  <TokenUsageTable />
+</div>
 
       {/* 🔥 Security Events Table (AI Firewall Logs) */}
       <div className="mt-8">

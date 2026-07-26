@@ -57,11 +57,16 @@ def call_llm(
             temperature=temperature,
             max_tokens=max_tokens,
         )
-        
-        return completion.choices[0].message.content
-        
+
+        usage = {
+            "prompt_tokens": completion.usage.prompt_tokens,
+            "completion_tokens": completion.usage.completion_tokens,
+            "total_tokens": completion.usage.total_tokens,
+        }
+
+        return completion.choices[0].message.content, usage
+
     except Exception as e:
-        # Log the error (you can add proper logging later)
         print(f"❌ Groq API error: {str(e)}")
         raise Exception(f"LLM service unavailable: {str(e)}")
 

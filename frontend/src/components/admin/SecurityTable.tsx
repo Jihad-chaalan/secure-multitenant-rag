@@ -7,6 +7,8 @@ interface SecurityTableProps {
 }
 
 export default function SecurityTable({ events }: SecurityTableProps) {
+  // Inside SecurityTable.tsx, at the top of the component:
+console.log('Security events:', events);
   if (events.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -35,6 +37,7 @@ export default function SecurityTable({ events }: SecurityTableProps) {
           <thead className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             <tr>
               <th className="px-6 py-3">Time</th>
+              <th className="px-6 py-3">Request ID</th>  {/* 🔥 NEW */}
               <th className="px-6 py-3">Department</th>
               <th className="px-6 py-3">Role</th>
               <th className="px-6 py-3">Query</th>
@@ -48,6 +51,9 @@ export default function SecurityTable({ events }: SecurityTableProps) {
               <tr key={event.id} className="hover:bg-red-50 transition">
                 <td className="px-6 py-3 text-gray-500 text-xs whitespace-nowrap">
                   {new Date(event.timestamp).toLocaleTimeString()}
+                </td>
+                <td className="px-6 py-3 font-mono text-xs text-gray-400">
+                  {event.request_id}
                 </td>
                 <td className="px-6 py-3 font-medium text-gray-700">
                   {event.department}

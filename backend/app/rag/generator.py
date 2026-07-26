@@ -72,13 +72,14 @@ def generate_answer(
     # 3. Call the LLM
     try:
         logger.info("🤖 Generating answer with LLM...")
-        answer = call_llm(
-            prompt=prompt,
-            temperature=temperature,
-            system_prompt=None  # The system prompt is built into the prompt string
-        )
+        # answer = call_llm(
+        #     prompt=prompt,
+        #     temperature=temperature,
+        #     system_prompt=None  # The system prompt is built into the prompt string
+        # )
+        answer, usage = call_llm(prompt=prompt, temperature=temperature)
         logger.info("✅ Answer generated.")
-        return answer, context
+        return answer, usage,context
         
     except Exception as e:
         logger.error(f"❌ LLM generation failed: {e}")
