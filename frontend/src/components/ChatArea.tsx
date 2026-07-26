@@ -36,17 +36,12 @@ export default function ChatArea() {
     scrollToBottom();
   }, [messages]);
 
-  // --- Refactored handleSend to accept a custom query ---
   const handleSend = async (customQuery?: string) => {
     const queryToSend = customQuery ?? input;
     if (!queryToSend.trim() || isLoading) return;
 
-    // If custom query was used, clear input; otherwise keep it cleared
-    if (customQuery) {
-      setInput('');
-    } else {
-      setInput('');
-    }
+    if (customQuery) setInput('');
+    else setInput('');
 
     const userMsg = { role: 'user' as const, content: queryToSend };
     addMessage(userMsg);
@@ -81,9 +76,7 @@ export default function ChatArea() {
           action_taken: 'block',
         });
 
-        if (data.performance) {
-          setChatResult([], data.performance);
-        }
+        if (data.performance) setChatResult([], data.performance);
         return;
       }
 
@@ -136,7 +129,6 @@ export default function ChatArea() {
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <WelcomeBox />
-            <QuickActions onSend={handleSend} />
             <TipNote />
           </div>
         ) : (
@@ -195,6 +187,11 @@ export default function ChatArea() {
             <div ref={messagesEndRef} />
           </>
         )}
+      </div>
+
+      {/* 🔥 QuickActions — Always visible */}
+      <div className="px-6 py-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+        <QuickActions onSend={handleSend} />
       </div>
 
       {/* Input Area */}

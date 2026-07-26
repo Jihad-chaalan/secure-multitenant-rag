@@ -8,10 +8,9 @@ interface QuickActionsProps {
 }
 
 export default function QuickActions({ onSend }: QuickActionsProps) {
-  const { department, role, messages, isLoading } = useAppStore();
+  const { department, role, isLoading } = useAppStore();
 
-  // Only show if no messages yet
-  if (messages.length > 0) return null;
+  // 🔥 REMOVED: if (messages.length > 0) return null;
 
   const questions = SAMPLE_QUESTIONS[department]?.[role];
   if (!questions) return null;
@@ -46,12 +45,10 @@ export default function QuickActions({ onSend }: QuickActionsProps) {
 
   return (
     <div className="mt-6 space-y-3">
-      {/* Description Text */}
       <p className="text-sm text-gray-500 dark:text-gray-400 text-center font-medium tracking-wide">
         ✦ Try these examples (click to ask) or write your question (you can check the drive link in the sidebar) ✦
       </p>
 
-      {/* Chips Row */}
       <div className="flex flex-wrap items-center justify-center gap-2.5">
         {allQuestions.map((q, idx) => (
           <button
@@ -70,7 +67,7 @@ export default function QuickActions({ onSend }: QuickActionsProps) {
         ))}
       </div>
 
-      {/* 🔥 NEW: Color Legend */}
+      {/* Color Legend */}
       <div className="flex flex-wrap items-center justify-center gap-4 pt-1 text-xs text-gray-400 dark:text-gray-500">
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-blue-500"></span>
