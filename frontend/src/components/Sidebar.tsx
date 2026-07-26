@@ -123,7 +123,7 @@ export default function Sidebar() {
       </div>
 
       {/* Footer: System Status */}
-      <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+      {/* <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
@@ -131,7 +131,7 @@ export default function Sidebar() {
           </div>
           <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono">v2.0</span>
         </div>
-      </div>
+      </div> */}
     </aside>
   );
 }

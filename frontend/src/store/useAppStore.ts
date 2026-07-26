@@ -156,9 +156,8 @@ export const useAppStore = create<AppState>()(
         department: state.department,
         role: state.role,
         requestHistory: state.requestHistory,
-        securityHistory: state.securityHistory,
-        messages: state.messages, // <-- Added to persist messages with their context
-      }),
+        securityHistory: state.securityHistory,    
+        }),
     }
   )
 );
