@@ -152,7 +152,6 @@ export const useAppStore = create<AppState>()(
         // Only persist these fields
         department: state.department,
         role: state.role,
-        messages: state.messages,
         requestHistory: state.requestHistory,
         securityHistory: state.securityHistory,
       }),
