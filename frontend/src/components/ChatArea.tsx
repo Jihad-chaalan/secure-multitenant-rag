@@ -52,6 +52,8 @@ export default function ChatArea() {
         content: streamingAnswer,
       });
 
+      setStreamingAnswer('');
+
       // The sources and performance are already set in the API response handler
       // We just need to show them now.
       // Wait for the next render to show sources (they are already in the store)

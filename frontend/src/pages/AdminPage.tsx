@@ -7,8 +7,15 @@ import SecurityTable from '../components/admin/SecurityTable';
 import TokenUsageTable from '../components/admin/TokenUsageTable';
 
 export default function AdminPage() {
-  const { requestHistory, securityHistory, clearHistory } = useAppStore();
+  const { requestHistory, securityHistory, clearHistory , clearSecurityHistory } = useAppStore();
 
+
+    const handleClearAll = () => {
+    if (window.confirm('Clear all history (requests + security events)?')) {
+      clearHistory();
+      clearSecurityHistory();
+    }
+  };
   return (
     <div className="p-8 max-w-7xl mx-auto">
       {/* Header */}
@@ -20,7 +27,7 @@ export default function AdminPage() {
           </p>
         </div>
         <button
-          onClick={clearHistory}
+          onClick={handleClearAll}
           className="text-sm text-red-500 hover:text-red-700 hover:underline transition"
         >
           Clear History
