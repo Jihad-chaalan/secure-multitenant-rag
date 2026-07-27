@@ -45,6 +45,7 @@ async def chat_endpoint(request: ChatRequest, req: Request):
                 blocked=True,
                 category=verdict.category,
                 message="Your request was blocked by the AI security layer.",
+                reason=verdict.reason, 
                 risk_score=verdict.risk_score,
             ),
         )

@@ -60,6 +60,7 @@ class SecurityWarning(BaseModel):
     blocked: bool
     category: str
     message: str
+    reason: str
     risk_score: int
 
 

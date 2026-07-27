@@ -114,7 +114,7 @@ export default function ChatArea() {
           query: queryToSend,
           department,
           role,
-          reason: data.security_warning.message,
+          reason: data.security_warning.reason || data.security_warning.message,
           category: data.security_warning.category,
           risk_score: data.security_warning.risk_score,
           action_taken: 'block',
