@@ -9,4 +9,11 @@ const api = axios.create({
   },
 });
 
+export const syncApi = {
+  triggerSync: async () => {
+    const response = await api.post('/sync');
+    return response.data;
+  },
+};
+
 export default api;
