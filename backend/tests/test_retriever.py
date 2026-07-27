@@ -4,6 +4,7 @@ import pytest
 import sys
 from pathlib import Path
 from unittest.mock import patch
+from app.config import RERANKER_CANDIDATE_COUNT
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -53,7 +54,7 @@ def test_retrieve_with_multi_tenant_filter(mock_search):
     mock_search.assert_called_once()
     call_kwargs = mock_search.call_args[1]
     assert call_kwargs["filters"] == {"department": "Department_A", "role": "Engineering"}
-    assert call_kwargs["top_k"] == 5
+    assert call_kwargs["top_k"] == RERANKER_CANDIDATE_COUNT
     assert len(errors) == 0
 
 

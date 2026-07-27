@@ -19,7 +19,7 @@ pytestmark = pytest.mark.skipif(
 
 def test_basic_prompt():
     """Test that the LLM responds to a simple question."""
-    response = call_llm("What is the capital of France?")
+    response , usage= call_llm("What is the capital of France?")
     
     # Assertions: Check that the response contains "Paris" and is not empty
     assert "Paris" in response, f"Expected 'Paris' in response, got: {response}"
@@ -41,7 +41,7 @@ def test_system_prompt():
 
 def test_temperature_and_tokens():
     """Test that temperature and max_tokens parameters work."""
-    response = call_llm(
+    response, usage= call_llm(
         prompt="Write a one-sentence summary of the French Revolution.",
         temperature=0.7,
         max_tokens=100
@@ -64,7 +64,7 @@ def test_rag_style_context():
     
     Context: {context}"""
     
-    response = call_llm(
+    response, usage = call_llm(
         prompt="How many vacation days do employees get?",
         system_prompt=system_prompt,
         temperature=0.1  # Low temp for factual stuff
@@ -79,7 +79,7 @@ def test_rag_style_context():
 def test_empty_prompt():
     """Test behavior when the prompt is empty (should still work or error gracefully)."""
     try:
-        response = call_llm("")
+        response, usage = call_llm("")
         # If it returns anything, fine, if it raises an error, we catch it
         assert response is not None
     except Exception as e:

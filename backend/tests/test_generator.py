@@ -38,7 +38,7 @@ def test_generate_answer_with_results():
     # We mock the LLM call to avoid needing a real API key
     with patch('app.rag.generator.call_llm') as mock_call_llm:
         # Set up the mock to return a sample response
-        mock_call_llm.return_value = "The capital of France is Paris."
+        mock_call_llm.return_value = ("The capital of France is Paris.", {})
         
         # Create mock search results
         query = "What is the capital of France?"
@@ -51,7 +51,7 @@ def test_generate_answer_with_results():
         ]
         
         # Call generate_answer
-        answer, context = generate_answer(query, mock_results, temperature=0.1)
+        answer, usage, context = generate_answer(query, mock_results, temperature=0.1)
         
         # Verify the mock was called
         mock_call_llm.assert_called_once()
