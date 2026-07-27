@@ -7,8 +7,7 @@ interface SecurityTableProps {
 }
 
 export default function SecurityTable({ events }: SecurityTableProps) {
-  // Inside SecurityTable.tsx, at the top of the component:
-console.log('Security events:', events);
+
   if (events.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
