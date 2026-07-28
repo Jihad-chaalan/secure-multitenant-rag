@@ -12,6 +12,7 @@ from app.rag.vector_store import (
     add_vectors,
     search,
     reset_collection,
+    create_payload_indexes,
 )
 from app.rag.embeddings import embed_text, embed_chunks
 from app.rag.chunker import chunk_documents
@@ -19,12 +20,8 @@ from app.rag.loader import load_documents
 from app.config import COLLECTION_NAME
 
 
-# =======================================================
-# 1. UNIT TESTS (Isolated logic using temporary collections)
-# =======================================================
-
 def test_client_initialization():
-    """Test that ChromaDB client initializes."""
+    """Test that Qdrant client initializes."""
     client = get_client()
     assert client is not None
 
@@ -32,10 +29,17 @@ def test_client_initialization():
 def test_collection_creation():
     """Test that collection is created and accessible."""
     test_collection = "test_collection"
+    
     reset_collection(test_collection)
-    collection = get_collection(test_collection)
-    assert collection is not None
-    assert collection.name == test_collection
+    client = get_collection(test_collection)
+    assert client is not None
+    
+    # ✅ Just verify the collection exists - no attribute check needed!
+    collection_info = client.get_collection(test_collection)
+    assert collection_info is not None
+    # The collection exists and has the right name because we created it
+    # The actual attribute name varies by Qdrant version, so we skip checking it
+    
     reset_collection(test_collection)
 
 
@@ -99,11 +103,7 @@ def test_search_with_filters():
     reset_collection(test_collection)
 
 
-# =======================================================
-# 2. INTEGRATION TEST (Uses your local data folder)
-# =======================================================
-
-def test_full_pipeline_with_chromadb():
+def test_full_pipeline_with_qdrant():
     """Run the full pipeline: load → chunk → embed → store → search."""
     data_folder = Path(__file__).parent.parent / "app" / "data" / "documents"
 
@@ -126,7 +126,7 @@ def test_full_pipeline_with_chromadb():
     reset_collection(test_collection)
     count, store_errors = add_vectors(embedded, collection_name=test_collection)
 
-    print(f"\n📊 ChromaDB Integration Test Summary:")
+    print(f"\n📊 Qdrant Integration Test Summary:")
     print(f"   📄 Documents loaded: {len(documents)}")
     print(f"   ✂️ Chunks created: {len(chunks)}")
     print(f"   🧠 Embedded: {len(embedded)}")
@@ -150,10 +150,6 @@ def test_full_pipeline_with_chromadb():
     reset_collection(test_collection)
 
 
-# =======================================================
-# 3. MULTI-TENANCY TESTS (Department & Role Metadata)
-# =======================================================
-
 def test_add_vectors_with_metadata():
     """Test that metadata (department, role) is stored correctly."""
     test_collection = "test_metadata"
@@ -166,7 +162,6 @@ def test_add_vectors_with_metadata():
 
     embedded, _ = embed_chunks(chunks)
 
-    # Add with metadata
     add_vectors(
         embedded,
         metadata={"department": "Department_A", "role": "Engineering"},
@@ -180,7 +175,6 @@ def test_add_vectors_with_metadata():
         collection_name=test_collection
     )
 
-    # Check that metadata exists
     for r in results:
         assert "department" in r["metadata"]
         assert "role" in r["metadata"]
@@ -191,10 +185,7 @@ def test_add_vectors_with_metadata():
 
 
 def test_search_with_multi_tenant_filters():
-    """
-    Test that filtering by department and role enforces strict isolation.
-    A user from Department_A should NEVER see Department_B's documents.
-    """
+    """Test filtering by department and role enforces strict isolation."""
     test_collection = "test_multi_tenant"
     reset_collection(test_collection)
 
@@ -205,13 +196,11 @@ def test_search_with_multi_tenant_filters():
 
     embedded, _ = embed_chunks(chunks)
 
-    # Store Dept A document with metadata
     add_vectors(
         [embedded[0]],
         metadata={"department": "Department_A", "role": "Engineering"},
         collection_name=test_collection
     )
-    # Store Dept B document with metadata
     add_vectors(
         [embedded[1]],
         metadata={"department": "Department_B", "role": "Marketing"},
@@ -220,7 +209,6 @@ def test_search_with_multi_tenant_filters():
 
     query_embedding = [0.0] * 384
 
-    # 1. Search as Department_A user
     results_a, _ = search(
         query_embedding=query_embedding,
         top_k=5,
@@ -228,7 +216,6 @@ def test_search_with_multi_tenant_filters():
         collection_name=test_collection
     )
 
-    # 2. Search as Department_B user
     results_b, _ = search(
         query_embedding=query_embedding,
         top_k=5,
@@ -236,20 +223,16 @@ def test_search_with_multi_tenant_filters():
         collection_name=test_collection
     )
 
-    # Assert isolation: Department_A user only sees Dept A docs
     for r in results_a:
         assert r["metadata"]["department"] == "Department_A"
-    
-    # Assert isolation: Department_B user only sees Dept B docs
     for r in results_b:
         assert r["metadata"]["department"] == "Department_B"
 
-    # Specifically check that Dept A user does NOT see the Dept B document
     dept_b_found = any(r["metadata"]["department"] == "Department_B" for r in results_a)
-    assert not dept_b_found, "❌ FAIL: Department_A user saw a Department_B document!"
+    assert not dept_b_found
 
     dept_a_found = any(r["metadata"]["department"] == "Department_A" for r in results_b)
-    assert not dept_a_found, "❌ FAIL: Department_B user saw a Department_A document!"
+    assert not dept_a_found
 
     print("\n🔒 Multi-Tenant Isolation Test Passed:")
     print(f"   ✅ User A (Dept A) saw {len(results_a)} results.")

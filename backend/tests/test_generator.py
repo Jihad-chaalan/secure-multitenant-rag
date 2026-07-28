@@ -3,12 +3,11 @@
 import pytest
 from pathlib import Path
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.rag.generator import build_rag_prompt, generate_answer
-from app.rag.retriever import format_results_for_prompt
 
 
 def test_build_rag_prompt():
@@ -28,19 +27,21 @@ def test_generate_answer_no_results():
     query = "What is the capital of France?"
     results = []
     
-    answer, context = generate_answer(query, results)
+    # ✅ generate_answer returns 3 values: (answer, usage, context)
+    answer, usage, context = generate_answer(query, results)
     
     assert "I don't have enough information" in answer or "No relevant documents" in answer
+    assert isinstance(usage, dict)
+    # context is the formatted string from format_results_for_prompt([])
+    assert context == "No relevant documents found."
 
 
 def test_generate_answer_with_results():
     """Test generate_answer with mock results (using patched LLM call)."""
-    # We mock the LLM call to avoid needing a real API key
     with patch('app.rag.generator.call_llm') as mock_call_llm:
-        # Set up the mock to return a sample response
-        mock_call_llm.return_value = ("The capital of France is Paris.", {})
+        # Mock returns (answer, usage) - 2 values
+        mock_call_llm.return_value = ("The capital of France is Paris.", {"total_tokens": 100})
         
-        # Create mock search results
         query = "What is the capital of France?"
         mock_results = [
             {
@@ -50,14 +51,24 @@ def test_generate_answer_with_results():
             }
         ]
         
-        # Call generate_answer
+        # ✅ generate_answer returns 3 values: (answer, usage, context)
         answer, usage, context = generate_answer(query, mock_results, temperature=0.1)
         
-        # Verify the mock was called
         mock_call_llm.assert_called_once()
-        
-        # Verify the answer is what we expect
         assert "Paris" in answer
-        
-        # Verify context is returned
         assert "france.txt" in context
+        assert isinstance(usage, dict)
+        assert "total_tokens" in usage
+
+
+def test_generate_answer_empty_query():
+    """Test generate_answer with an empty query."""
+    query = ""
+    results = [{"text": "Some text", "metadata": {}}]
+    
+    # ✅ generate_answer returns 2 values here: (answer, context)
+    # This is the ONLY case where it returns 2 values
+    answer, context = generate_answer(query, results)
+    
+    assert "Please ask a valid question" in answer or "valid question" in answer
+    assert context == ""
