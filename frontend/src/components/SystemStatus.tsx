@@ -17,9 +17,12 @@ export default function SystemStatus() {
       if (data.status === "healthy") {
         setStatus("online");
         setLabel("Online");
-      } else {
+      } else if (data.status === "degraded") {
         setStatus("degraded");
         setLabel("Degraded");
+      } else {
+        setStatus("offline");
+        setLabel("Offline");
       }
     } catch (error) {
       setStatus("offline");
@@ -28,9 +31,42 @@ export default function SystemStatus() {
   };
 
   useEffect(() => {
+    let interval: number | null = null;  
+
+    const startPolling = () => {
+      if (interval) return;
+      interval = window.setInterval(checkHealth, 30000);  
+    };
+
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    // Check once immediately
     checkHealth();
-    const interval = setInterval(checkHealth, 30000); // Poll every 30s
-    return () => clearInterval(interval);
+
+    // Start polling if tab is visible
+    if (document.visibilityState === "visible") {
+      startPolling();
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   const getStyles = () => {
@@ -59,7 +95,7 @@ export default function SystemStatus() {
     <div className="flex items-center gap-2 text-sm">
       <span
         className={`inline-block w-2.5 h-2.5 rounded-full ${styles.dot} animate-pulse`}
-      ></span>
+      />
       <span className={`font-medium ${styles.text}`}>{label}</span>
     </div>
   );

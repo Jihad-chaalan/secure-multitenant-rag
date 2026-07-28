@@ -3,7 +3,7 @@
 import { useAppStore } from '../store/useAppStore';
 
 export default function TipNote() {
-  const { messages } = useAppStore();
+  const {  } = useAppStore();
 
   // Only show when chat is empty (or keep it always visible — up to you)
   // I'll keep it always visible so they remember to switch contexts

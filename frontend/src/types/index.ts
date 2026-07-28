@@ -30,6 +30,7 @@ export interface SecurityWarning {
   blocked: boolean;
   category: string;
   message: string;
+  reason: string;
   risk_score: number;
 }
 
