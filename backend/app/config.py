@@ -30,7 +30,9 @@ EMBEDDING_DIM = 384  # all-MiniLM-L6-v2
 
 # VectorDB Settings 
 COLLECTION_NAME = os.getenv("COLLECTION_NAME", "enterprise_rag")
-
+# Qdrant Cloud Settings
+QDRANT_URL = os.getenv("QDRANT_URL", "")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")
 
 # Retrieval Settings
 TOP_K = int(os.getenv("TOP_K", 5))

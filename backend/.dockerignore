@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.env
+chroma_db/
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+gdrive_credentials.json  # Don't commit this to the image

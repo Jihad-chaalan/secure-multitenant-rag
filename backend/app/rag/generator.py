@@ -42,7 +42,7 @@ def generate_answer(
     query: str,
     results: List[Dict[str, Any]],
     temperature: float = 0.1
-) -> tuple[str, str]:
+) -> tuple[str, dict, str]:
     """
     Generate an answer using the LLM based on retrieved chunks.
 
@@ -64,7 +64,7 @@ def generate_answer(
     context = format_results_for_prompt(results)
     
     if not results:
-        return "I don't have enough information to answer that. No relevant documents were found.", context
+        return "I don't have enough information to answer that. No relevant documents were found.",{}, context
 
     # 2. Build the prompt
     prompt = build_rag_prompt(query, context)
@@ -83,4 +83,4 @@ def generate_answer(
         
     except Exception as e:
         logger.error(f"❌ LLM generation failed: {e}")
-        return f"Sorry, I encountered an error while generating the answer: {str(e)}", context
+        return f"Sorry, I encountered an error while generating the answer: {str(e)}",{}, context

@@ -4,7 +4,7 @@ import logging
 from typing import Dict, List, Tuple, Any
 from rank_bm25 import BM25Okapi
 
-from app.rag.vector_store import get_collection
+from app.rag.vector_store import get_client
 from app.config import COLLECTION_NAME
 
 logger = logging.getLogger(__name__)
@@ -16,39 +16,55 @@ _bm25_corpus: Dict[str, List[Dict[str, Any]]] = {}
 
 def build_bm25_indexes(collection_name: str = COLLECTION_NAME):
     """
-    Fetch all documents from ChromaDB, group by (department, role),
+    Fetch all documents from Qdrant, group by (department, role),
     and build a BM25 index for each group.
     """
     global _bm25_indexes, _bm25_corpus
     
-    logger.info("🔄 Building BM25 indexes from ChromaDB...")
+    logger.info("🔄 Building BM25 indexes from Qdrant...")
     
-    collection = get_collection(collection_name)
+    client = get_client()
     
-    # Fetch all documents with their metadata
+    # Fetch all documents with their metadata using scroll
     try:
-        all_data = collection.get(include=["documents", "metadatas"])
+        all_data = client.scroll(
+            collection_name=collection_name,
+            limit=10000,  # Max points to retrieve
+            with_payload=True,
+            with_vectors=False,
+        )
+        
+        # scroll returns (points, next_page_offset)
+        points = all_data[0] if all_data else []
+        
+        if not points:
+            logger.warning("No documents found in Qdrant. BM25 indexes will be empty.")
+            return
+        
+        logger.info(f"📄 Retrieved {len(points)} documents from Qdrant.")
+        
     except Exception as e:
-        logger.error(f"Failed to fetch documents from ChromaDB: {e}")
-        return
-    
-    if not all_data or not all_data['documents']:
-        logger.warning("No documents found in ChromaDB. BM25 indexes will be empty.")
+        logger.error(f"Failed to fetch documents from Qdrant: {e}")
         return
     
     # Group by (department, role)
     grouped: Dict[str, Tuple[List[str], List[Dict]]] = {}
     
-    for doc, meta in zip(all_data['documents'], all_data['metadatas']):
-        dept = meta.get('department', 'Unknown')
-        role = meta.get('role', 'Unknown')
+    for point in points:
+        payload = point.payload or {}
+        dept = payload.get('department', 'Unknown')
+        role = payload.get('role', 'Unknown')
         key = f"{dept}_{role}"
+        text = payload.get('text', '')
+        
+        if not text:
+            continue
         
         if key not in grouped:
             grouped[key] = ([], [])
         
-        grouped[key][0].append(doc)      # The text
-        grouped[key][1].append(meta)     # The metadata (source_file, etc.)
+        grouped[key][0].append(text)      # The text
+        grouped[key][1].append(payload)   # The metadata (source_file, etc.)
     
     # Build BM25 index for each group
     for key, (texts, metadatas) in grouped.items():
@@ -123,4 +139,3 @@ def get_bm25_status() -> Dict[str, int]:
         key: len(_bm25_corpus.get(key, []))
         for key in _bm25_indexes.keys()
     }
-

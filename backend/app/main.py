@@ -15,7 +15,9 @@ from app.config import ALLOWED_ORIGINS, GROQ_API_KEY, USE_RERANKER
 from app.rag.bm25_index import build_bm25_indexes, get_bm25_status
 from app.rag.embeddings import get_embedding_status, get_encoder
 from app.rag.reranker import get_reranker, get_reranker_status
-from app.rag.vector_store import get_collection
+from app.rag.vector_store import get_client
+from app.config import COLLECTION_NAME
+
 
 # Configure logging
 logging.basicConfig(
@@ -41,12 +43,13 @@ async def lifespan(app: FastAPI):
     chromadb_status = "disconnected"
     vector_count = 0
     try:
-        collection = get_collection()
-        vector_count = collection.count()
+        client = get_client()
+        result = client.count(collection_name=COLLECTION_NAME)
+        vector_count = result.count
         chromadb_status = "connected"
-        logger.info(f"✅ ChromaDB connected. {vector_count} vectors found.")
+        logger.info(f"✅ Qdrant  connected. {vector_count} vectors found.")
     except Exception as e:
-        logger.error(f"❌ ChromaDB connection failed: {e}")
+        logger.error(f"❌ Qdrant  connection failed: {e}")
 
     # --- 2. Build BM25 indexes (graceful degradation) ---
     bm25_status = "unavailable"
@@ -92,7 +95,7 @@ async def lifespan(app: FastAPI):
     elapsed = time.perf_counter() - start_time
     logger.info("=" * 60)
     logger.info("✅ FastAPI server is ready.")
-    logger.info(f"   ChromaDB: {chromadb_status} ({vector_count} vectors)")
+    logger.info(f"   Qdrant : {chromadb_status} ({vector_count} vectors)")
     logger.info(f"   BM25:     {bm25_status} ({bm25_groups} groups)")
     logger.info(f"   Groq:     {groq_status}")
     logger.info(f"   Embedder: {'loaded' if get_embedding_status() else 'failed'}")
