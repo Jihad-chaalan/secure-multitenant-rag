@@ -88,10 +88,17 @@ COPY backend/tests/ /app/tests/
 COPY --from=frontend-builder /app/frontend/dist /var/www/html
 
 # ============================================
-# Configure Nginx - PORT 8080
+# Configure Nginx - PORT 8080 (FIXED)
 # ============================================
+# Remove ALL default nginx configs
 RUN rm -f /etc/nginx/conf.d/default.conf
+RUN rm -f /etc/nginx/sites-enabled/default
+RUN rm -f /etc/nginx/sites-available/default
 
+# Override the main nginx.conf to remove port 80
+RUN sed -i 's/include \/etc\/nginx\/conf.d\/\*.conf;/# include \/etc\/nginx\/conf.d\/\*.conf;/g' /etc/nginx/nginx.conf
+
+# Create custom config with port 8080
 RUN echo 'server { \
     listen 8080; \
     server_name _; \
