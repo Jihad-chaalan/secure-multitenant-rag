@@ -1,0 +1,8 @@
+build:
+  docker:
+    web:
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api/v1
+run:
+  web: /app/start.sh

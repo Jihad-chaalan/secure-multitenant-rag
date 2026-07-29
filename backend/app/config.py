@@ -43,7 +43,7 @@ GDRIVE_ROOT_FOLDER_ID = os.getenv("GDRIVE_ROOT_FOLDER_ID", "")
 
 # Reranker Settings (Cross-Encoder)
 USE_RERANKER = os.getenv("USE_RERANKER", "true").lower() == "true"
-RERANKER_MODEL = os.getenv("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
+RERANKER_MODEL = os.getenv("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L6-v2")
 RERANKER_TOP_K = int(os.getenv("RERANKER_TOP_K", 5))
 RERANKER_CANDIDATE_COUNT = int(os.getenv("RERANKER_CANDIDATE_COUNT", 20))
 
