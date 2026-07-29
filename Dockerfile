@@ -88,7 +88,7 @@ COPY backend/tests/ /app/tests/
 COPY --from=frontend-builder /app/frontend/dist /var/www/html
 
 # ============================================
-# Configure Nginx - PORT 8080 (FIXED)
+# Configure Nginx - TEMPLATE (port injected at runtime)
 # ============================================
 # Remove ALL default nginx configs
 RUN rm -f /etc/nginx/conf.d/default.conf
@@ -98,9 +98,10 @@ RUN rm -f /etc/nginx/sites-available/default
 # Override the main nginx.conf to remove port 80
 RUN sed -i 's/include \/etc\/nginx\/conf.d\/\*.conf;/# include \/etc\/nginx\/conf.d\/\*.conf;/g' /etc/nginx/nginx.conf
 
-# Create custom config with port 8080
+# Create nginx config as a TEMPLATE. Heroku assigns $PORT at runtime,
+# so we can't hardcode a port here — this gets rendered in start.sh instead.
 RUN echo 'server { \
-    listen 8080; \
+    listen PORT_PLACEHOLDER; \
     server_name _; \
     \
     location / { \
@@ -133,33 +134,38 @@ RUN echo 'server { \
         proxy_pass http://localhost:8000/openapi.json; \
         proxy_set_header Host $host; \
     } \
-}' > /etc/nginx/conf.d/default.conf
+}' > /etc/nginx/conf.d/default.conf.template
 
 # ============================================
-# Startup Script - Run Both Nginx and FastAPI
+# Startup Script - Renders nginx config with $PORT, then runs both services
 # ============================================
 RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
 echo "=============================================================="\n\
 echo "🚀 Starting full application..."\n\
-echo "📡 Nginx will serve frontend on port 8080"\n\
+echo "📡 Nginx will serve frontend on port ${PORT:-8080}"\n\
 echo "⚡ FastAPI will run on port 8000"\n\
 echo "=============================================================="\n\
+\n\
+# Render nginx config with the Heroku-assigned $PORT (falls back to 8080 locally)\n\
+sed "s/PORT_PLACEHOLDER/${PORT:-8080}/g" /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf\n\
 \n\
 # Test nginx config\n\
 nginx -t\n\
 \n\
-# Start Nginx\n\
+# Start Nginx in the foreground-managed background\n\
 nginx -g "daemon off;" &\n\
 \n\
 # Wait for nginx to start\n\
 sleep 2\n\
 \n\
 # Start FastAPI\n\
-uvicorn app.main:app --host 0.0.0.0 --port 8000' > /app/start.sh
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000' > /app/start.sh
 
 RUN chmod +x /app/start.sh
 
-# Expose ports
+# EXPOSE is informational only — Heroku ignores it and injects $PORT at runtime
 EXPOSE 8080 8000
 
 # Start both services
