@@ -87,21 +87,21 @@ COPY backend/tests/ /app/tests/
 COPY --from=frontend-builder /app/frontend/dist /var/www/html
 
 # ============================================
-# Startup Script - FastAPI ONLY
+# Startup Script - FastAPI with Heroku PORT
 # ============================================
 RUN echo '#!/bin/bash\n\
 echo "=============================================================="\n\
 echo "🚀 Starting FastAPI backend..."\n\
-echo "⚡ API will run on port 8000"\n\
+echo "⚡ API will run on port ${PORT:-8000}"\n\
 echo "=============================================================="\n\
 \n\
-# Start FastAPI only\n\
-uvicorn app.main:app --host 0.0.0.0 --port 8000' > /app/start.sh
+# Use PORT from Heroku or default to 8000\n\
+PORT=${PORT:-8000}\n\
+\n\
+# Start FastAPI on the correct port\n\
+exec uvicorn app.main:app --host 0.0.0.0 --port $PORT' > /app/start.sh
 
 RUN chmod +x /app/start.sh
-
-# Expose port
-EXPOSE 8000
 
 # Start FastAPI
 CMD ["/app/start.sh"]
