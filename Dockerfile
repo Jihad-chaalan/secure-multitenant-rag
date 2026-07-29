@@ -22,7 +22,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # ============================================
-# STAGE 2: Build Backend
+# STAGE 2: Build Backend (FastAPI Only)
 # ============================================
 FROM python:3.12-slim
 
@@ -39,13 +39,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install system dependencies (including nginx)
+# Install system dependencies (no nginx needed)
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     curl \
     ca-certificates \
-    nginx \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PyTorch (CPU version)
@@ -84,78 +83,25 @@ RUN python -c "from sentence_transformers import SentenceTransformer, CrossEncod
 COPY backend/app/ /app/app/
 COPY backend/tests/ /app/tests/
 
-# Copy built frontend from stage 1
+# Copy built frontend (will be served separately later)
 COPY --from=frontend-builder /app/frontend/dist /var/www/html
 
 # ============================================
-# Configure Nginx - UPDATED to use Heroku PORT
-# ============================================
-# Remove default nginx config
-RUN rm -f /etc/nginx/conf.d/default.conf
-
-# Create nginx config that uses PORT from environment
-RUN echo 'server { \
-    listen ${PORT:-8080}; \
-    server_name _; \
-    \
-    location / { \
-        root /var/www/html; \
-        try_files $$uri /index.html; \
-    } \
-    \
-    location /api { \
-        proxy_pass http://localhost:8000; \
-        proxy_set_header Host $$host; \
-        proxy_set_header X-Real-IP $$remote_addr; \
-        proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for; \
-        proxy_set_header X-Forwarded-Proto $$scheme; \
-    } \
-    \
-    location /api/v1 { \
-        proxy_pass http://localhost:8000/api/v1; \
-        proxy_set_header Host $$host; \
-        proxy_set_header X-Real-IP $$remote_addr; \
-        proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for; \
-        proxy_set_header X-Forwarded-Proto $$scheme; \
-    } \
-    \
-    location /docs { \
-        proxy_pass http://localhost:8000/docs; \
-        proxy_set_header Host $$host; \
-    } \
-    \
-    location /openapi.json { \
-        proxy_pass http://localhost:8000/openapi.json; \
-        proxy_set_header Host $$host; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
-
-# ============================================
-# Startup Script - UPDATED for Heroku
+# Startup Script - FastAPI ONLY
 # ============================================
 RUN echo '#!/bin/bash\n\
 echo "=============================================================="\n\
-echo "🚀 Starting combined application..."\n\
-echo "📡 Nginx will serve frontend on port ${PORT:-8080}"\n\
-echo "⚡ FastAPI will run on port 8000"\n\
+echo "🚀 Starting FastAPI backend..."\n\
+echo "⚡ API will run on port 8000"\n\
 echo "=============================================================="\n\
 \n\
-# Use Heroku PORT or default to 8080\n\
-export PORT=${PORT:-8080}\n\
-\n\
-# Replace the port in nginx config\n\
-sed -i "s/listen \\${PORT:-8080}/listen $PORT/g" /etc/nginx/conf.d/default.conf\n\
-\n\
-# Start Nginx in background\n\
-nginx -g "daemon off;" &\n\
-\n\
-# Start FastAPI\n\
+# Start FastAPI only\n\
 uvicorn app.main:app --host 0.0.0.0 --port 8000' > /app/start.sh
 
 RUN chmod +x /app/start.sh
 
-# Expose ports
-EXPOSE 8080 8000
+# Expose port
+EXPOSE 8000
 
-# Start both services
+# Start FastAPI
 CMD ["/app/start.sh"]
