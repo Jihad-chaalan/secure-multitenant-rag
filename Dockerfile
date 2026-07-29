@@ -90,16 +90,18 @@ COPY --from=frontend-builder /app/frontend/dist /var/www/html
 # ============================================
 # Configure Nginx - TEMPLATE (port injected at runtime)
 # ============================================
-# Remove ALL default nginx configs
+# Remove ALL default nginx site configs (but keep the conf.d include active!)
 RUN rm -f /etc/nginx/conf.d/default.conf
 RUN rm -f /etc/nginx/sites-enabled/default
 RUN rm -f /etc/nginx/sites-available/default
 
-# Override the main nginx.conf to remove port 80
-RUN sed -i 's/include \/etc\/nginx\/conf.d\/\*.conf;/# include \/etc\/nginx\/conf.d\/\*.conf;/g' /etc/nginx/nginx.conf
+# NOTE: we do NOT comment out the "include /etc/nginx/conf.d/*.conf;" line
+# in nginx.conf — we need it active so our rendered config below actually loads.
 
 # Create nginx config as a TEMPLATE. Heroku assigns $PORT at runtime,
 # so we can't hardcode a port here — this gets rendered in start.sh instead.
+# Using .template extension so it's NOT picked up by the conf.d/*.conf glob
+# until start.sh renders it into default.conf.
 RUN echo 'server { \
     listen PORT_PLACEHOLDER; \
     server_name _; \
@@ -154,7 +156,7 @@ sed "s/PORT_PLACEHOLDER/${PORT:-8080}/g" /etc/nginx/conf.d/default.conf.template
 # Test nginx config\n\
 nginx -t\n\
 \n\
-# Start Nginx in the foreground-managed background\n\
+# Start Nginx in the background\n\
 nginx -g "daemon off;" &\n\
 \n\
 # Wait for nginx to start\n\
