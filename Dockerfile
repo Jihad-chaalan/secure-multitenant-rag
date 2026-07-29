@@ -88,53 +88,63 @@ COPY backend/tests/ /app/tests/
 COPY --from=frontend-builder /app/frontend/dist /var/www/html
 
 # ============================================
-# Configure Nginx - FIXED!
+# Configure Nginx - UPDATED to use Heroku PORT
 # ============================================
+# Remove default nginx config
+RUN rm -f /etc/nginx/conf.d/default.conf
+
+# Create nginx config that uses PORT from environment
 RUN echo 'server { \
-    listen 8080; \
+    listen ${PORT:-8080}; \
     server_name _; \
     \
     location / { \
         root /var/www/html; \
-        try_files $uri /index.html; \
+        try_files $$uri /index.html; \
     } \
     \
     location /api { \
         proxy_pass http://localhost:8000; \
-        proxy_set_header Host $host; \
-        proxy_set_header X-Real-IP $remote_addr; \
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
-        proxy_set_header X-Forwarded-Proto $scheme; \
+        proxy_set_header Host $$host; \
+        proxy_set_header X-Real-IP $$remote_addr; \
+        proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for; \
+        proxy_set_header X-Forwarded-Proto $$scheme; \
     } \
     \
     location /api/v1 { \
         proxy_pass http://localhost:8000/api/v1; \
-        proxy_set_header Host $host; \
-        proxy_set_header X-Real-IP $remote_addr; \
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
-        proxy_set_header X-Forwarded-Proto $scheme; \
+        proxy_set_header Host $$host; \
+        proxy_set_header X-Real-IP $$remote_addr; \
+        proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for; \
+        proxy_set_header X-Forwarded-Proto $$scheme; \
     } \
     \
     location /docs { \
         proxy_pass http://localhost:8000/docs; \
-        proxy_set_header Host $host; \
+        proxy_set_header Host $$host; \
     } \
     \
     location /openapi.json { \
         proxy_pass http://localhost:8000/openapi.json; \
-        proxy_set_header Host $host; \
+        proxy_set_header Host $$host; \
     } \
 }' > /etc/nginx/conf.d/default.conf
 
 # ============================================
-# Startup Script - FIXED!
+# Startup Script - UPDATED for Heroku
 # ============================================
 RUN echo '#!/bin/bash\n\
 echo "=============================================================="\n\
 echo "🚀 Starting combined application..."\n\
-echo "📡 Nginx will serve frontend on port 8080"\n\
+echo "📡 Nginx will serve frontend on port ${PORT:-8080}"\n\
 echo "⚡ FastAPI will run on port 8000"\n\
 echo "=============================================================="\n\
+\n\
+# Use Heroku PORT or default to 8080\n\
+export PORT=${PORT:-8080}\n\
+\n\
+# Replace the port in nginx config\n\
+sed -i "s/listen \\${PORT:-8080}/listen $PORT/g" /etc/nginx/conf.d/default.conf\n\
 \n\
 # Start Nginx in background\n\
 nginx -g "daemon off;" &\n\
