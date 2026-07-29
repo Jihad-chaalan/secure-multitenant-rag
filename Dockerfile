@@ -88,62 +88,75 @@ COPY backend/tests/ /app/tests/
 COPY --from=frontend-builder /app/frontend/dist /var/www/html
 
 # ============================================
-# Configure Nginx - TEMPLATE (port injected at runtime)
+# Nginx: FULLY SELF-CONTAINED CONFIG
 # ============================================
-RUN rm -f /etc/nginx/conf.d/default.conf
-RUN rm -f /etc/nginx/sites-enabled/default
-RUN rm -f /etc/nginx/sites-available/default
+# We deliberately do NOT use /etc/nginx/nginx.conf, conf.d/, or
+# sites-enabled/ at all. The Debian nginx package ships a default
+# config chain that, in Heroku's non-root runtime, was causing nginx
+# to attempt binding port 80 from a source we could not fully isolate.
+# Instead we give nginx ONE explicit, complete config file via `-c`,
+# which nginx uses exclusively -- nothing else on disk is consulted.
+# Verified working as a non-root user on an arbitrary high port.
+RUN mkdir -p /app/nginx/body /app/nginx/proxy /app/nginx/fastcgi \
+    /app/nginx/uwsgi /app/nginx/scgi /app/nginx/logs && \
+    chmod -R 777 /app/nginx
 
-# NOTE: we deliberately do NOT touch the "include /etc/nginx/conf.d/*.conf;"
-# line in nginx.conf — it must stay active so our rendered config loads.
+RUN echo 'worker_processes auto; \
+pid /app/nginx/nginx.pid; \
+error_log /app/nginx/logs/error.log; \
+\
+events { \
+    worker_connections 768; \
+} \
+\
+http { \
+    include /etc/nginx/mime.types; \
+    default_type application/octet-stream; \
+    access_log /app/nginx/logs/access.log; \
+    client_body_temp_path /app/nginx/body; \
+    proxy_temp_path /app/nginx/proxy; \
+    fastcgi_temp_path /app/nginx/fastcgi; \
+    uwsgi_temp_path /app/nginx/uwsgi; \
+    scgi_temp_path /app/nginx/scgi; \
+\
+    server { \
+        listen PORT_PLACEHOLDER; \
+        server_name _; \
+\
+        location / { \
+            root /var/www/html; \
+            try_files $uri /index.html; \
+        } \
+\
+        location /api { \
+            proxy_pass http://localhost:8000; \
+            proxy_set_header Host $host; \
+            proxy_set_header X-Real-IP $remote_addr; \
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
+            proxy_set_header X-Forwarded-Proto $scheme; \
+        } \
+\
+        location /api/v1 { \
+            proxy_pass http://localhost:8000/api/v1; \
+            proxy_set_header Host $host; \
+            proxy_set_header X-Real-IP $remote_addr; \
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
+            proxy_set_header X-Forwarded-Proto $scheme; \
+        } \
+\
+        location /docs { \
+            proxy_pass http://localhost:8000/docs; \
+            proxy_set_header Host $host; \
+        } \
+\
+        location /openapi.json { \
+            proxy_pass http://localhost:8000/openapi.json; \
+            proxy_set_header Host $host; \
+        } \
+    } \
+}' > /app/nginx/nginx.conf.template
 
-RUN echo 'server { \
-    listen PORT_PLACEHOLDER; \
-    server_name _; \
-    \
-    location / { \
-        root /var/www/html; \
-        try_files $uri /index.html; \
-    } \
-    \
-    location /api { \
-        proxy_pass http://localhost:8000; \
-        proxy_set_header Host $host; \
-        proxy_set_header X-Real-IP $remote_addr; \
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
-        proxy_set_header X-Forwarded-Proto $scheme; \
-    } \
-    \
-    location /api/v1 { \
-        proxy_pass http://localhost:8000/api/v1; \
-        proxy_set_header Host $host; \
-        proxy_set_header X-Real-IP $remote_addr; \
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
-        proxy_set_header X-Forwarded-Proto $scheme; \
-    } \
-    \
-    location /docs { \
-        proxy_pass http://localhost:8000/docs; \
-        proxy_set_header Host $host; \
-    } \
-    \
-    location /openapi.json { \
-        proxy_pass http://localhost:8000/openapi.json; \
-        proxy_set_header Host $host; \
-    } \
-}' > /etc/nginx/conf.d/default.conf.template
-
-# ---- CRITICAL FIX: Heroku runs the container as a non-root, dynamically
-# assigned user. Even though we're root during build, at runtime nginx
-# cannot create NEW files in /etc/nginx/conf.d (root-owned, 755 by default).
-# Pre-create the target file here (as root, at build time) and open up
-# permissions so the runtime sed command can overwrite its CONTENTS
-# (which only needs write access to the existing file, not the directory).
-RUN touch /etc/nginx/conf.d/default.conf && \
-    chmod 666 /etc/nginx/conf.d/default.conf && \
-    mkdir -p /var/log/nginx /var/lib/nginx/body /var/lib/nginx/proxy /var/lib/nginx/fastcgi /var/lib/nginx/uwsgi /var/lib/nginx/scgi && \
-    chmod -R 777 /var/log/nginx /var/lib/nginx && \
-    chmod 777 /run 2>/dev/null || true
+RUN touch /app/nginx/nginx.conf && chmod 666 /app/nginx/nginx.conf
 
 # ============================================
 # Startup Script - Run Both Nginx and FastAPI
@@ -158,24 +171,22 @@ echo "⚡ FastAPI will run on port 8000"\n\
 echo "👤 Running as UID: $(id -u), GID: $(id -g)"\n\
 echo "=============================================================="\n\
 \n\
-# Render nginx config with the Heroku-assigned $PORT (falls back to 8080 locally)\n\
-sed "s/PORT_PLACEHOLDER/${PORT:-8080}/g" /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf\n\
+# Render self-contained nginx config with the Heroku-assigned $PORT\n\
+sed "s/PORT_PLACEHOLDER/${PORT:-8080}/g" /app/nginx/nginx.conf.template > /app/nginx/nginx.conf\n\
 \n\
-echo "---- Rendered /etc/nginx/conf.d/default.conf ----"\n\
-cat /etc/nginx/conf.d/default.conf\n\
+echo "---- Rendered /app/nginx/nginx.conf ----"\n\
+cat /app/nginx/nginx.conf\n\
 echo "---------------------------------------------------"\n\
 \n\
-mkdir -p /tmp/nginx\n\
-\n\
-# Test nginx config; dump full merged config for visibility if it fails\n\
-if ! nginx -t 2>&1; then\n\
-    echo "❌ nginx config test failed. Full merged config dump:"\n\
-    nginx -T 2>&1 || true\n\
+# Test config (self-contained: -c points directly at our file, no system\n\
+# nginx.conf / conf.d / sites-enabled is consulted at all)\n\
+if ! nginx -t -c /app/nginx/nginx.conf 2>&1; then\n\
+    echo "❌ nginx config test failed"\n\
     exit 1\n\
 fi\n\
 \n\
-# Start Nginx with an explicit, writable pid path\n\
-nginx -g "daemon off; pid /tmp/nginx/nginx.pid;" &\n\
+# Start Nginx with our self-contained config\n\
+nginx -c /app/nginx/nginx.conf &\n\
 \n\
 # Wait for nginx to start\n\
 sleep 2\n\
@@ -185,7 +196,7 @@ exec uvicorn app.main:app --host 0.0.0.0 --port 8000' > /app/start.sh
 
 RUN chmod +x /app/start.sh
 
-# Expose ports (informational only — Heroku ignores this and injects $PORT)
+# Expose ports (informational only -- Heroku ignores this and injects $PORT)
 EXPOSE 8080 8000
 
 # Start both services
