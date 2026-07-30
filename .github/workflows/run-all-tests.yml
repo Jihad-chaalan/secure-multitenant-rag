@@ -31,22 +31,29 @@ jobs:
 
       - name: Start the app (with explicit collection)
         env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }} \
-          QDRANT_URL: ${{ secrets.QDRANT_URL }} \
-          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }} \
-          COLLECTION_NAME: ${{ secrets.COLLECTION_NAME }} \
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          QDRANT_COLLECTION: ${{ secrets.COLLECTION_NAME }}
         run: |
           echo "Starting app with collection: $QDRANT_COLLECTION"
           uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-          sleep 15
-          curl -f http://localhost:8000/api/v1/health || exit 1
-          echo "✅ App is running on localhost:8000"
+          for i in {1..15}; do
+            if curl -sf http://localhost:8000/api/v1/health; then
+              echo "✅ App is running on localhost:8000"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "❌ App failed to become healthy"
+          exit 1
 
       - name: Run tests (skip retriever integration)
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           QDRANT_URL: ${{ secrets.QDRANT_URL }}
           QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          QDRANT_COLLECTION: ${{ secrets.COLLECTION_NAME }}
         run: |
           pytest tests/ \
             --ignore=tests/test_retriever.py \
