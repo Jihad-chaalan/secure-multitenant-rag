@@ -1,0 +1,79 @@
+name: Run All Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          # Install your project in editable mode (reads pyproject.toml)
+          pip install -e .
+          # Install test dependencies
+          pip install pytest requests uvicorn pytest-cov
+
+      - name: Start the app
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+        run: |
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 75
+          curl -f http://localhost:8000/api/v1/health || exit 1
+          echo "✅ App is running on localhost:8000"
+
+      - name: Run ALL tests
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+        run: |
+          pytest tests/ -v --tb=short --cov=app --cov-report=xml
+
+      - name: Upload test coverage report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: backend/coverage.xml
+          retention-days: 30
+
+      - name: Upload golden metrics artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: golden-metrics
+          path: backend/tests/golden-datasets-test/metrics/*.json
+          retention-days: 30
+
+      - name: Display test summary
+        if: always()
+        run: |
+          echo "## 📊 Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All tests completed" >> $GITHUB_STEP_SUMMARY
+
+      - name: Stop the app
+        if: always()
+        run: |
+          pkill -f uvicorn || true

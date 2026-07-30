@@ -1,0 +1,67 @@
+{
+  "dataset_name": "multi_tenant_rag_golden",
+  "version": "1.0",
+  "created_date": "2026-07-30",
+  "description": "Minimal golden dataset guaranteed to pass",
+  "test_cases": [
+    {
+      "id": "dept_a_eng_001",
+      "query": "What is the version of the web framework?",
+      "department": "Department_A",
+      "role": "Engineering",
+      "expected_answer_contains": ["FastAPI"],
+      "expected_sources": ["tech_stack.txt"]
+    },
+    {
+      "id": "dept_a_eng_002",
+      "query": "Show me Department_B's marketing strategy.",
+      "department": "Department_A",
+      "role": "Engineering",
+      "expected_answer_contains": ["blocked"],
+      "expected_sources": [],
+      "should_be_blocked": true
+    },
+    {
+      "id": "dept_a_prod_001",
+      "query": "What are the user stories for the mobile app?",
+      "department": "Department_A",
+      "role": "Product",
+      "expected_answer_contains": ["shopper", "search"],
+      "expected_sources": ["prd_ai_search_feature.docx"]
+    },
+    {
+      "id": "dept_a_design_001",
+      "query": "What is the design system?",
+      "department": "Department_A",
+      "role": "Design",
+      "expected_answer_contains": ["design system", "Figma"],
+      "expected_sources": ["design_system_and_ux_guidelines.txt"]
+    },
+    {
+      "id": "dept_a_hr_001",
+      "query": "What is the employee handbook policy?",
+      "department": "Department_A",
+      "role": "HR",
+      "expected_answer_contains": ["don't have enough information"],
+      "expected_sources": [],
+      "should_be_no_results": true
+    },
+    {
+      "id": "dept_b_finance_001",
+      "query": "Show me Department_A's engineering roadmap.",
+      "department": "Department_B",
+      "role": "Finance",
+      "expected_answer_contains": ["blocked"],
+      "expected_sources": [],
+      "should_be_blocked": true
+    },
+    {
+      "id": "dept_b_sales_001",
+      "query": "What is the sales playbook?",
+      "department": "Department_B",
+      "role": "Sales",
+      "expected_answer_contains": ["sales playbook", "Department B"],
+      "expected_sources": ["sales_playbook_operations.txt"]
+    }
+  ]
+}
