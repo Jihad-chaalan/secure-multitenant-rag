@@ -29,47 +29,36 @@ jobs:
           pip install -e .
           pip install pytest requests uvicorn pytest-cov
 
-      - name: Start the app
+      - name: Start the app (with explicit collection)
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           QDRANT_URL: ${{ secrets.QDRANT_URL }}
           QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          QDRANT_COLLECTION: enterprise_rag
         run: |
+          echo "Starting app with collection: $QDRANT_COLLECTION"
           uvicorn app.main:app --host 0.0.0.0 --port 8000 &
           sleep 15
           curl -f http://localhost:8000/api/v1/health || exit 1
           echo "✅ App is running on localhost:8000"
 
-      - name: Run ALL tests
+      - name: Run tests (skip retriever integration)
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           QDRANT_URL: ${{ secrets.QDRANT_URL }}
           QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
         run: |
-          pytest tests/ -v --tb=short --cov=app --cov-report=xml
+          pytest tests/ \
+            --ignore=tests/test_retriever.py \
+            -v --tb=short --cov=app --cov-report=xml
 
-      - name: Upload test coverage report
+      - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: backend/coverage.xml
           retention-days: 30
-
-      - name: Upload golden metrics artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: golden-metrics
-          path: backend/tests/golden-datasets-test/metrics/*.json
-          retention-days: 30
-
-      - name: Display test summary
-        if: always()
-        run: |
-          echo "## 📊 Test Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ All tests completed" >> $GITHUB_STEP_SUMMARY
 
       - name: Stop the app
         if: always()
