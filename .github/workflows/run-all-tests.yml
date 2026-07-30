@@ -26,9 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          # Install your project in editable mode (reads pyproject.toml)
           pip install -e .
-          # Install test dependencies
           pip install pytest requests uvicorn pytest-cov
 
       - name: Start the app
@@ -38,7 +36,7 @@ jobs:
           QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
         run: |
           uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-          sleep 75
+          sleep 15
           curl -f http://localhost:8000/api/v1/health || exit 1
           echo "✅ App is running on localhost:8000"
 
@@ -52,7 +50,7 @@ jobs:
 
       - name: Upload test coverage report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: backend/coverage.xml
@@ -60,7 +58,7 @@ jobs:
 
       - name: Upload golden metrics artifact
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: golden-metrics
           path: backend/tests/golden-datasets-test/metrics/*.json
