@@ -29,6 +29,13 @@ jobs:
           pip install -e .
           pip install pytest requests uvicorn pytest-cov
 
+      - name: Debug secret presence (not values!)
+        run: |
+          echo "QDRANT_URL is set: ${{ secrets.QDRANT_URL != '' }}"
+          echo "QDRANT_API_KEY is set: ${{ secrets.QDRANT_API_KEY != '' }}"
+          echo "GROQ_API_KEY is set: ${{ secrets.GROQ_API_KEY != '' }}"
+          echo "COLLECTION_NAME is set: ${{ secrets.COLLECTION_NAME != '' }}"
+
       - name: Start the app (with explicit collection)
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
