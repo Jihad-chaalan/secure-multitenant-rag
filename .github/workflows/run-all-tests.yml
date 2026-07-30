@@ -34,6 +34,7 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }} \
           QDRANT_URL: ${{ secrets.QDRANT_URL }} \
           QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }} \
+          COLLECTION_NAME: ${{ secrets.COLLECTION_NAME }} \
         run: |
           echo "Starting app with collection: $QDRANT_COLLECTION"
           uvicorn app.main:app --host 0.0.0.0 --port 8000 &
